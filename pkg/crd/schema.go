@@ -158,6 +158,9 @@ func applyMarkers(ctx *schemaContext, markerSet markers.MarkerValues, props *api
 
 // typeToSchema creates a schema for the given AST type.
 func typeToSchema(ctx *schemaContext, rawType ast.Expr) *apiext.JSONSchemaProps {
+	fmt.Printf("ctx.info.Name = %+v ", ctx.info.Name)
+	fmt.Printf("ctx.info.Doc = %+v\n", ctx.info.Doc)
+	fmt.Println("")
 	var props *apiext.JSONSchemaProps
 	switch expr := rawType.(type) {
 	case *ast.Ident:
@@ -179,6 +182,9 @@ func typeToSchema(ctx *schemaContext, rawType ast.Expr) *apiext.JSONSchemaProps 
 	}
 
 	props.Description = ctx.info.Doc
+	// Nope, never deals with actually godoc comments
+	//fmt.Printf("props.Description = %+v\n", props.Description)
+	//fmt.Println("")
 
 	applyMarkers(ctx, ctx.info.Markers, props, rawType)
 

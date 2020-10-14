@@ -159,6 +159,8 @@ func (p *Parser) LookupType(pkg *loader.Package, name string) *markers.TypeInfo 
 
 // NeedSchemaFor indicates that a schema should be generated for the given type.
 func (p *Parser) NeedSchemaFor(typ TypeIdent) {
+	fmt.Printf("typ = %+v\n", typ)
+	fmt.Println("")
 	p.init()
 
 	p.NeedPackage(typ.Package)
@@ -171,20 +173,30 @@ func (p *Parser) NeedSchemaFor(typ TypeIdent) {
 		typ.Package.AddError(fmt.Errorf("unknown type %s", typ))
 		return
 	}
+	// This infor already has the doc set to the go doc values
+	// {Name: Doc: XXXXXX, Tag:json:"metadata,omitempty"}
+	//fmt.Printf("info = %+v\n", info)
+	//fmt.Println("")
 
 	// avoid tripping recursive schemata, like ManagedFields, by adding an empty WIP schema
 	p.Schemata[typ] = apiext.JSONSchemaProps{}
 
 	schemaCtx := newSchemaContext(typ.Package, p, p.AllowDangerousTypes)
 	ctxForInfo := schemaCtx.ForInfo(info)
+	// fmt.Printf("schemaCtx = %+v\n", schemaCtx)
+	//fmt.Printf("ctxForInfo = %+v\n", ctxForInfo)
 
 	pkgMarkers, err := markers.PackageMarkers(p.Collector, typ.Package)
 	if err != nil {
 		typ.Package.AddError(err)
 	}
 	ctxForInfo.PackageMarkers = pkgMarkers
+	//fmt.Printf("pkgMarkers = %+v\n", pkgMarkers)
 
 	schema := infoToSchema(ctxForInfo)
+	// JSONSchemaProps{metadata: {0xc0006bc1f0 XXXXXX	nil <nil> false...}}
+	//fmt.Printf("schema = %+v\n", schema)
+	//fmt.Println("")
 
 	p.Schemata[typ] = *schema
 }
@@ -196,8 +208,11 @@ func (p *Parser) NeedFlattenedSchemaFor(typ TypeIdent) {
 		return
 	}
 
+	//fmt.Printf("typ = %+v\n", typ)
 	p.NeedSchemaFor(typ)
 	partialFlattened := p.flattener.FlattenType(typ)
+	// YES, desc is here
+	//fmt.Printf("partialFlattened = %+v\n", partialFlattened)
 	fullyFlattened := FlattenEmbedded(partialFlattened, typ.Package)
 
 	p.FlattenedSchemata[typ] = *fullyFlattened

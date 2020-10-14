@@ -175,11 +175,15 @@ func EachType(col *Collector, pkg *loader.Package, cb TypeCallback) error {
 				}
 			}
 		}
+		eDoc := extractDoc(spec, decl)
+		// hmm, eDoc NEVER set to any of the description comments?
+		//fmt.Printf("eDoc = %+v\n", eDoc)
+		//fmt.Println("")
 
 		cb(&TypeInfo{
 			Name:    spec.Name.Name,
 			Markers: markers[spec],
-			Doc:     extractDoc(spec, decl),
+			Doc:     eDoc,
 			Fields:  fields,
 			RawDecl: decl,
 			RawSpec: spec,

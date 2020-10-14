@@ -75,6 +75,9 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 			Scope: apiext.NamespaceScoped,
 		},
 	}
+	// This does NOT have the desc
+	fmt.Printf("NeedFor crd = %+v\n", crd)
+	fmt.Println("")
 
 	for _, pkg := range packages {
 		typeIdent := TypeIdent{Package: pkg, Name: groupKind.Kind}
@@ -84,6 +87,9 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 		}
 		p.NeedFlattenedSchemaFor(typeIdent)
 		fullSchema := p.FlattenedSchemata[typeIdent]
+		// This DOES have the desc
+		fmt.Printf("fullSchema = %+v\n", fullSchema)
+		fmt.Println("")
 		fullSchema = *fullSchema.DeepCopy() // don't mutate the cache (we might be truncating description, etc)
 		if maxDescLen != nil {
 			TruncateDescription(&fullSchema, *maxDescLen)
@@ -95,8 +101,13 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 				OpenAPIV3Schema: &fullSchema, // fine to take a reference since we deepcopy above
 			},
 		}
+		//fmt.Printf("ver = %+v\n", ver)
+		//fmt.Println("")
 		crd.Spec.Versions = append(crd.Spec.Versions, ver)
 	}
+
+	//fmt.Printf("pre-marker apply crd = %+v\n", crd)
+	//fmt.Println("")
 
 	// markers are applied *after* initial generation of objects
 	for _, pkg := range packages {
@@ -119,6 +130,9 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 			}
 		}
 	}
+
+	//fmt.Printf("post marker apply crd = %+v\n", crd)
+	//fmt.Println("")
 
 	// fix the name if the plural was changed (this is the form the name *has* to take, so no harm in changing it).
 	crd.Name = crd.Spec.Names.Plural + "." + groupKind.Group
@@ -169,6 +183,8 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 	// these to empty till we get a better solution.
 	crd.Status.Conditions = []apiext.CustomResourceDefinitionCondition{}
 	crd.Status.StoredVersions = []string{}
+	//fmt.Printf("final CRD %+v\n", crd)
+	//fmt.Println("")
 
 	p.CustomResourceDefinitions[groupKind] = crd
 }

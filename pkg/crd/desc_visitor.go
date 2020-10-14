@@ -41,6 +41,8 @@ func (v descVisitor) Visit(schema *apiext.JSONSchemaProps) SchemaVisitor {
 	if schema == nil {
 		return v
 	}
+	// This DOES have the desc
+	//fmt.Printf("schema.Description = %+v\n", schema.Description)
 	if v.maxLen < 0 {
 		return nil /* no further work to be done for this schema */
 	}
