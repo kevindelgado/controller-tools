@@ -17,6 +17,8 @@ limitations under the License.
 package crd
 
 import (
+	"fmt"
+
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
@@ -38,6 +40,7 @@ type SchemaVisitor interface {
 // pointers to each schema node are passed to the visitor, so any changes
 // made by the visitor will be reflected to the passed-in schema.
 func EditSchema(schema *apiext.JSONSchemaProps, visitor SchemaVisitor) {
+	fmt.Println("EditSchema walk it!")
 	walker := schemaWalker{visitor: visitor}
 	walker.walkSchema(schema)
 }
@@ -58,6 +61,14 @@ type schemaWalker struct {
 func (w schemaWalker) walkSchema(schema *apiext.JSONSchemaProps) {
 	// Walk a potential chain of schema references, keeping track of seen
 	// references to avoid circular references
+	fmt.Println("")
+	fmt.Println("walkSchema!")
+	fmt.Printf("w = %+v\n", &w)
+	fmt.Printf("schema.Definitions begin = %+v\n", schema.Definitions)
+	fmt.Printf("schema.Properties begin = %+v\n", schema.Properties)
+	fmt.Printf("schema.Title = %+v\n", schema.Title)
+	fmt.Printf("schema.Type = %+v\n", schema.Type)
+	fmt.Printf("schema.Description = %+v\n", schema.Description)
 	subVisitor := w.visitor
 	seenRefs := map[string]bool{}
 	if schema.Ref != nil {
@@ -88,6 +99,7 @@ func (w schemaWalker) walkSchema(schema *apiext.JSONSchemaProps) {
 	subWalker.walkSlice(schema.OneOf)
 	subWalker.walkSlice(schema.AnyOf)
 	subWalker.walkPtr(schema.Not)
+	fmt.Printf("schema.Properties = %+v\n", schema.Properties)
 	subWalker.walkMap(schema.Properties)
 	if schema.AdditionalProperties != nil {
 		subWalker.walkPtr(schema.AdditionalProperties.Schema)
@@ -100,6 +112,7 @@ func (w schemaWalker) walkSchema(schema *apiext.JSONSchemaProps) {
 	if schema.AdditionalItems != nil {
 		subWalker.walkPtr(schema.AdditionalItems.Schema)
 	}
+	fmt.Printf("schema.Definitions end = %+v\n", schema.Definitions)
 	subWalker.walkMap(schema.Definitions)
 }
 
@@ -108,6 +121,9 @@ func (w schemaWalker) walkMap(defs map[string]apiext.JSONSchemaProps) {
 	for name, def := range defs {
 		// this is iter var reference is because we immediately preseve it below
 		//nolint:gosec
+		fmt.Printf("name = %+v\n", name)
+		fmt.Printf("def = %+v\n", def)
+		fmt.Println("wakMap!")
 		w.walkSchema(&def)
 		// make sure the edits actually go through since we can't
 		// take a reference to the value in the map

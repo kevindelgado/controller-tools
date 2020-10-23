@@ -140,7 +140,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) (result error) {
 			fullSchema := parser.FlattenedSchemata[typeIdent]
 			if g.MaxDescLen != nil {
 				fullSchema = *fullSchema.DeepCopy()
-				crdgen.TruncateDescription(&fullSchema, *g.MaxDescLen)
+				crdgen.TruncateDescription(&fullSchema, g.MaxDescLen)
 			}
 			existingSet.NewSchemata[gv.Version] = fullSchema
 		}

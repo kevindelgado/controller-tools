@@ -98,11 +98,16 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		// Perform defaulting here to avoid ambiguity later
 		AllowDangerousTypes: g.AllowDangerousTypes != nil && *g.AllowDangerousTypes == true,
 	}
+	fmt.Printf("parser.Types post parser def= %+v\n", parser.Types)
 
 	AddKnownTypes(parser)
+	fmt.Printf("parser.Types add known types= %+v\n", parser.Types)
 	for _, root := range ctx.Roots {
+		fmt.Printf("root = %+v\n", root)
 		parser.NeedPackage(root)
 	}
+	// THIS!
+	fmt.Printf("parser.Types need pkg= %+v\n", parser.Types)
 
 	metav1Pkg := FindMetav1(ctx.Roots)
 	if metav1Pkg == nil {
@@ -111,6 +116,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	}
 
 	// TODO: allow selecting a specific object
+	fmt.Printf("parser.Types pre FKK= %+v\n", parser.Types)
 	kubeKinds := FindKubeKinds(parser, metav1Pkg)
 	if len(kubeKinds) == 0 {
 		// no objects in the roots
@@ -118,6 +124,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	}
 
 	crdVersions := g.CRDVersions
+	fmt.Printf("crdVersions = %+v\n", crdVersions)
 
 	if len(crdVersions) == 0 {
 		crdVersions = []string{defaultVersion}
@@ -126,6 +133,9 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	for groupKind := range kubeKinds {
 		parser.NeedCRDFor(groupKind, g.MaxDescLen)
 		crdRaw := parser.CustomResourceDefinitions[groupKind]
+		fmt.Printf("groupKind = %+v\n", groupKind)
+		fmt.Printf("crdRaw = %+v\n", crdRaw)
+		fmt.Println("")
 		addAttribution(&crdRaw)
 
 		versionedCRDs := make([]interface{}, len(crdVersions))
@@ -134,6 +144,8 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 			if err != nil {
 				return err
 			}
+			fmt.Printf("conv = %+v\n", conv)
+			fmt.Println("")
 			versionedCRDs[i] = conv
 		}
 
@@ -160,6 +172,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		}
 
 		for i, crd := range versionedCRDs {
+			fmt.Printf("crd = %+v\n", crd)
 			// defaults are not allowed to be specified in v1beta1 CRDs, so strip them
 			// before writing to a file
 			if crdVersions[i] == "v1beta1" {
@@ -271,6 +284,8 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 	// TODO(directxman12): technically, we should be finding metav1 per-package
 	kubeKinds := map[schema.GroupKind]struct{}{}
 	for typeIdent, info := range parser.Types {
+		fmt.Printf("typeIdent kube kind= %+v\n", typeIdent)
+		fmt.Printf("info kube kind= %+v\n", info)
 		hasObjectMeta := false
 		hasTypeMeta := false
 
@@ -278,15 +293,20 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 		pkg.NeedTypesInfo()
 		typesInfo := pkg.TypesInfo
 
-		for _, field := range info.Fields {
+		for i, field := range info.Fields {
+			fmt.Printf("field infofileds = %+v\n", field)
 			if field.Name != "" {
 				// type and object meta are embedded,
 				// so they can't be this
 				continue
 			}
+			fmt.Println("past name check")
 
 			fieldType := typesInfo.TypeOf(field.RawField.Type)
 			namedField, isNamed := fieldType.(*types.Named)
+			fmt.Printf("fieldType = %+v\n", fieldType)
+			fmt.Printf("namedField = %+v\n", namedField)
+			fmt.Printf("isNamed = %+v\n", isNamed)
 			if !isNamed {
 				// ObjectMeta and TypeMeta are named types
 				continue
@@ -305,6 +325,12 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 			switch namedField.Obj().Name() {
 			case "ObjectMeta":
 				hasObjectMeta = true
+				// clear the godoc comment from the Doc
+				fmt.Printf("field.Doc pre = %+v\n", info.Fields[i])
+				cleanField := field
+				cleanField.Doc = ""
+				info.Fields[i] = cleanField
+				fmt.Printf("field.Doc post = %+v\n", info.Fields[i])
 			case "TypeMeta":
 				hasTypeMeta = true
 			}
@@ -318,6 +344,7 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 			Group: parser.GroupVersions[pkg].Group,
 			Kind:  typeIdent.Name,
 		}
+		fmt.Printf("groupKind = %+v\n", groupKind)
 		kubeKinds[groupKind] = struct{}{}
 	}
 

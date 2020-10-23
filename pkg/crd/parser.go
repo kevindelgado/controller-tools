@@ -121,6 +121,7 @@ func (p *Parser) init() {
 func (p *Parser) indexTypes(pkg *loader.Package) {
 	// autodetect
 	pkgMarkers, err := markers.PackageMarkers(p.Collector, pkg)
+	fmt.Printf("pkgMarkers = %+v\n", pkgMarkers)
 	if err != nil {
 		pkg.AddError(err)
 	} else {
@@ -145,6 +146,9 @@ func (p *Parser) indexTypes(pkg *loader.Package) {
 			Package: pkg,
 			Name:    info.Name,
 		}
+		fmt.Printf("ident = %+v\n", ident)
+		// HERE!!
+		fmt.Printf("info = %+v\n", info)
 
 		p.Types[ident] = info
 	}); err != nil {
@@ -159,12 +163,24 @@ func (p *Parser) LookupType(pkg *loader.Package, name string) *markers.TypeInfo 
 
 // NeedSchemaFor indicates that a schema should be generated for the given type.
 func (p *Parser) NeedSchemaFor(typ TypeIdent) {
-	fmt.Printf("typ = %+v\n", typ)
-	fmt.Println("")
 	p.init()
-
 	p.NeedPackage(typ.Package)
+
+	fmt.Printf("typ = %+v\n", typ)
+	if typ.Name == "ObjectMeta" {
+		fmt.Println("OBJGMETA")
+		if s, ok := p.Schemata[typ]; ok {
+			fmt.Printf("s = %+v\n", s)
+			fmt.Printf("s.Description = %+v\n", s.Description)
+		} else {
+			fmt.Println("schema for obj meta NOT known")
+		}
+
+	}
+
 	if _, knownSchema := p.Schemata[typ]; knownSchema {
+		fmt.Println("returningi known schema")
+		fmt.Println("")
 		return
 	}
 
@@ -195,8 +211,8 @@ func (p *Parser) NeedSchemaFor(typ TypeIdent) {
 
 	schema := infoToSchema(ctxForInfo)
 	// JSONSchemaProps{metadata: {0xc0006bc1f0 XXXXXX	nil <nil> false...}}
-	//fmt.Printf("schema = %+v\n", schema)
-	//fmt.Println("")
+	fmt.Printf("schema = %+v\n", schema)
+	fmt.Println("")
 
 	p.Schemata[typ] = *schema
 }
@@ -208,7 +224,7 @@ func (p *Parser) NeedFlattenedSchemaFor(typ TypeIdent) {
 		return
 	}
 
-	//fmt.Printf("typ = %+v\n", typ)
+	fmt.Printf("flat typ = %+v\n", typ)
 	p.NeedSchemaFor(typ)
 	partialFlattened := p.flattener.FlattenType(typ)
 	// YES, desc is here
@@ -239,6 +255,7 @@ func (p *Parser) AddPackage(pkg *loader.Package) {
 func (p *Parser) NeedPackage(pkg *loader.Package) {
 	p.init()
 	if _, checked := p.packages[pkg]; checked {
+		fmt.Println("return early 1")
 		return
 	}
 	// overrides are going to be written without vendor.  This is why we index by the actual
@@ -246,7 +263,9 @@ func (p *Parser) NeedPackage(pkg *loader.Package) {
 	if override, overridden := p.PackageOverrides[loader.NonVendorPath(pkg.PkgPath)]; overridden {
 		override(p, pkg)
 		p.packages[pkg] = struct{}{}
+		fmt.Println("return early 2")
 		return
 	}
+	fmt.Println("return add pkg")
 	p.AddPackage(pkg)
 }

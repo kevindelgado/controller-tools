@@ -101,6 +101,7 @@ func (c *schemaContext) requestSchema(pkgPath, typeName string) {
 	if pkgPath != "" {
 		pkg = c.pkg.Imports()[pkgPath]
 	}
+	fmt.Println("request schema")
 	c.schemaRequester.NeedSchemaFor(TypeIdent{
 		Package: pkg,
 		Name:    typeName,

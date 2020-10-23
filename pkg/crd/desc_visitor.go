@@ -17,6 +17,7 @@ limitations under the License.
 package crd
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 
@@ -26,7 +27,7 @@ import (
 // TruncateDescription truncates the description of fields in given schema if it
 // exceeds maxLen.
 // It tries to chop off the description at the closest sentence boundary.
-func TruncateDescription(schema *apiext.JSONSchemaProps, maxLen int) {
+func TruncateDescription(schema *apiext.JSONSchemaProps, maxLen *int) {
 	EditSchema(schema, descVisitor{maxLen: maxLen})
 }
 
@@ -34,24 +35,32 @@ func TruncateDescription(schema *apiext.JSONSchemaProps, maxLen int) {
 // description of the fields to specified maxLen.
 type descVisitor struct {
 	// maxLen is the maximum allowed length for decription of a field
-	maxLen int
+	maxLen *int
 }
 
 func (v descVisitor) Visit(schema *apiext.JSONSchemaProps) SchemaVisitor {
 	if schema == nil {
 		return v
 	}
+	fmt.Printf("schema.Title = %+v\n", schema.Title)
+	fmt.Printf("schema.Type = %+v\n", schema.Type)
+
+	// TODO; wipe desc if we're in metadatad
+
+	if v.maxLen == nil {
+		return v
+	}
 	// This DOES have the desc
 	//fmt.Printf("schema.Description = %+v\n", schema.Description)
-	if v.maxLen < 0 {
+	if *v.maxLen < 0 {
 		return nil /* no further work to be done for this schema */
 	}
-	if v.maxLen == 0 {
+	if *v.maxLen == 0 {
 		schema.Description = ""
 		return v
 	}
-	if len(schema.Description) > v.maxLen {
-		schema.Description = truncateString(schema.Description, v.maxLen)
+	if len(schema.Description) > *v.maxLen {
+		schema.Description = truncateString(schema.Description, *v.maxLen)
 		return v
 	}
 	return v

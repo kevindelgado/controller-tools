@@ -76,8 +76,8 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 		},
 	}
 	// This does NOT have the desc
-	fmt.Printf("NeedFor crd = %+v\n", crd)
-	fmt.Println("")
+	//fmt.Printf("NeedFor crd = %+v\n", crd)
+	//fmt.Println("")
 
 	for _, pkg := range packages {
 		typeIdent := TypeIdent{Package: pkg, Name: groupKind.Kind}
@@ -90,10 +90,15 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 		// This DOES have the desc
 		fmt.Printf("fullSchema = %+v\n", fullSchema)
 		fmt.Println("")
+		//if typeIdent.Name == "ObjectMeta" {
+		//	fmt.Println("TYPENAME")
+		//	fmt.Printf("fullSchema.Description = %+v\n", fullSchema.Description)
+		//}
+		//fmt.Println("")
 		fullSchema = *fullSchema.DeepCopy() // don't mutate the cache (we might be truncating description, etc)
-		if maxDescLen != nil {
-			TruncateDescription(&fullSchema, *maxDescLen)
-		}
+		//if maxDescLen != nil {
+		TruncateDescription(&fullSchema, maxDescLen)
+		//}
 		ver := apiext.CustomResourceDefinitionVersion{
 			Name:   p.GroupVersions[pkg].Version,
 			Served: true,

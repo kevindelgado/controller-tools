@@ -17,6 +17,7 @@ limitations under the License.
 package markers
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
@@ -178,6 +179,8 @@ func EachType(col *Collector, pkg *loader.Package, cb TypeCallback) error {
 		eDoc := extractDoc(spec, decl)
 		// hmm, eDoc NEVER set to any of the description comments?
 		//fmt.Printf("eDoc = %+v\n", eDoc)
+		// but fields does
+		fmt.Printf("fields = %+v\n", fields)
 		//fmt.Println("")
 
 		cb(&TypeInfo{

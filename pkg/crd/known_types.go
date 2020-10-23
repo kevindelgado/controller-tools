@@ -16,6 +16,8 @@ limitations under the License.
 package crd
 
 import (
+	"fmt"
+
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"sigs.k8s.io/controller-tools/pkg/loader"
@@ -122,7 +124,9 @@ func AddKnownTypes(parser *Parser) {
 	// ensure everything is there before adding to PackageOverrides
 	// TODO(directxman12): this is a bit of a hack, maybe just use constructors?
 	parser.init()
+	fmt.Println("known types")
 	for pkgName, override := range KnownPackages {
+		fmt.Printf("pkgName = %+v\n", pkgName)
 		parser.PackageOverrides[pkgName] = override
 	}
 }

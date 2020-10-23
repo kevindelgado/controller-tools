@@ -207,6 +207,7 @@ func (v *allOfVisitor) Visit(schema *apiext.JSONSchemaProps) SchemaVisitor {
 // schema.
 func FlattenEmbedded(schema *apiext.JSONSchemaProps, errRec ErrorRecorder) *apiext.JSONSchemaProps {
 	outSchema := schema.DeepCopy()
+	fmt.Println("FlattenEmbedded EditSchema not it")
 	EditSchema(outSchema, &allOfVisitor{errRec: errRec})
 	return outSchema
 }
@@ -242,6 +243,7 @@ func (f *Flattener) cacheType(typ TypeIdent, schema apiext.JSONSchemaProps) {
 
 // loadUnflattenedSchema fetches a fresh, unflattened schema from the parser.
 func (f *Flattener) loadUnflattenedSchema(typ TypeIdent) (*apiext.JSONSchemaProps, error) {
+	fmt.Println("loadUnflattened")
 	f.Parser.NeedSchemaFor(typ)
 
 	baseSchema, found := f.Parser.Schemata[typ]
@@ -258,6 +260,7 @@ func (f *Flattener) FlattenType(typ TypeIdent) *apiext.JSONSchemaProps {
 	if cachedSchema, isCached := f.flattenedTypes[typ]; isCached {
 		return &cachedSchema
 	}
+	fmt.Println("flattentype")
 	baseSchema, err := f.loadUnflattenedSchema(typ)
 	if err != nil {
 		typ.Package.AddError(err)
@@ -272,6 +275,7 @@ func (f *Flattener) FlattenType(typ TypeIdent) *apiext.JSONSchemaProps {
 // It deep-copies the schema first, so the input schema won't be affected.
 func (f *Flattener) FlattenSchema(baseSchema apiext.JSONSchemaProps, currentPackage *loader.Package) *apiext.JSONSchemaProps {
 	resSchema := baseSchema.DeepCopy()
+	fmt.Println("FlattenSchema EditSchema indirectly called for objmeta")
 	EditSchema(resSchema, &flattenVisitor{
 		Flattener:      f,
 		currentPackage: currentPackage,
@@ -403,11 +407,13 @@ func (f *flattenVisitor) Visit(baseSchema *apiext.JSONSchemaProps) SchemaVisitor
 		}
 
 		// ...otherwise, we need to flatten
+		fmt.Println("refident")
 		refSchema, err := f.loadUnflattenedSchema(refIdent)
 		if err != nil {
 			f.currentPackage.AddError(err)
 			return nil
 		}
+		fmt.Printf("refSchema = %+v\n", refSchema)
 		refSchema = refSchema.DeepCopy()
 
 		// keep field around to preserve field-level validation, docs, etc
