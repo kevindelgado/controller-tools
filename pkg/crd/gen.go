@@ -194,12 +194,31 @@ func removeDescriptionFromMetadata(crd *apiext.CustomResourceDefinition) {
 }
 
 func removeDescriptionFromMetadataProps(v *apiext.JSONSchemaProps) {
-	if m, ok := v.Properties["metadata"]; ok {
-		meta := &m
-		if meta.Description != "" {
-			fmt.Fprintf(os.Stderr, "Warning: metadata description unsupported. Removing description: %s\n", meta.Description)
-			meta.Description = ""
-			v.Properties["metadata"] = m
+	if v == nil {
+		return
+	}
+	for str, property := range v.Properties {
+		if str == "metadata" {
+			if property.Description != "" {
+				fmt.Fprintf(os.Stderr, "Warning: metadata description unsupported. Removing description: %s\n", property.Description)
+				property.Description = ""
+			}
+			if property.Items != nil {
+				removeDescriptionFromMetadataProps(property.Items.Schema)
+				for i := range property.Items.JSONSchemas {
+					removeDescriptionFromMetadataProps(&property.Items.JSONSchemas[i])
+				}
+			}
+			if property.AdditionalProperties != nil {
+				removeDescriptionFromMetadataProps(property.AdditionalProperties.Schema)
+			}
+			if property.AdditionalItems != nil {
+				removeDescriptionFromMetadataProps(property.AdditionalItems.Schema)
+			}
+			// property var reference is fine -- we handle the persistence of the modfications on the line below
+			//nolint:gosec
+			removeDescriptionFromMetadataProps(&property)
+			v.Properties[str] = property
 
 		}
 	}
@@ -217,12 +236,31 @@ func removeDescriptionFromMetadataLegacy(crd *apiextlegacy.CustomResourceDefinit
 }
 
 func removeDescriptionFromMetadataPropsLegacy(v *apiextlegacy.JSONSchemaProps) {
-	if m, ok := v.Properties["metadata"]; ok {
-		meta := &m
-		if meta.Description != "" {
-			fmt.Fprintf(os.Stderr, "Warning: metadata description unsupported. Removing description: %s\n", meta.Description)
-			meta.Description = ""
-			v.Properties["metadata"] = m
+	if v == nil {
+		return
+	}
+	for str, property := range v.Properties {
+		if str == "metadata" {
+			if property.Description != "" {
+				fmt.Fprintf(os.Stderr, "Warning: metadata description unsupported. Removing description: %s\n", property.Description)
+				property.Description = ""
+			}
+			if property.Items != nil {
+				removeDescriptionFromMetadataPropsLegacy(property.Items.Schema)
+				for i := range property.Items.JSONSchemas {
+					removeDescriptionFromMetadataPropsLegacy(&property.Items.JSONSchemas[i])
+				}
+			}
+			if property.AdditionalProperties != nil {
+				removeDescriptionFromMetadataPropsLegacy(property.AdditionalProperties.Schema)
+			}
+			if property.AdditionalItems != nil {
+				removeDescriptionFromMetadataPropsLegacy(property.AdditionalItems.Schema)
+			}
+			// property var reference is fine -- we handle the persistence of the modfications on the line below
+			//nolint:gosec
+			removeDescriptionFromMetadataPropsLegacy(&property)
+			v.Properties[str] = property
 
 		}
 	}
